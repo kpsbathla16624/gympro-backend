@@ -1,5 +1,6 @@
-export interface IWorkoutPlan {
-  _id?: string;
+import mongoose, { Schema, Document } from 'mongoose';
+export interface IWorkoutPlan extends Document {
+ 
   userId: string; // Reference to User
   
   name: string;
@@ -27,7 +28,7 @@ export interface IWorkoutPlan {
   updatedAt: Date;
 }
 
-export interface IWeeklySchedule {
+export interface IWeeklySchedule extends Document {
   monday?: IDayPlan;
   tuesday?: IDayPlan;
   wednesday?: IDayPlan;
@@ -37,7 +38,7 @@ export interface IWeeklySchedule {
   sunday?: IDayPlan;
 }
 
-export interface IDayPlan {
+export interface IDayPlan extends Document {
   name: string; // e.g., "Push Day", "Back & Biceps", "Leg Day"
   muscleGroups: IMuscleGroup[];
   exercises: IPlannedExercise[];
@@ -46,13 +47,13 @@ export interface IDayPlan {
   isRestDay: boolean;
 }
 
-export interface IMuscleGroup {
+export interface IMuscleGroup extends Document {
   name: string; // e.g., "chest", "back", "legs", "shoulders"
   primary: boolean; // Primary or secondary focus
   color?: string; // For UI display
 }
 
-export interface IPlannedExercise {
+export interface IPlannedExercise  extends Document {
   exerciseId: string; // Reference to Exercise
   exerciseName: string; // Denormalized for quick access
   muscleGroup: string;
@@ -70,7 +71,7 @@ export interface IPlannedExercise {
   supersetGroup?: number;
 }
 
-export interface IPlannedSet {
+export interface IPlannedSet  extends Document {
   type: 'normal' | 'warmup' | 'dropset' | 'failure' | 'amrap';
   targetReps?: number;
   repRange?: {
@@ -96,8 +97,12 @@ export enum MuscleGroup {
   CALVES = 'calves',
   ABS = 'abs',
   CARDIO = 'cardio',
-  FULL_BODY = 'full_body'
+  FULL_BODY = 'full_body',
+  CORE = 'core',
+  TRAPS = 'traps',
+  FOREARMS = 'forearms'
 }
+
 
 // Enum for days of the week
 export enum DayOfWeek {
@@ -109,6 +114,88 @@ export enum DayOfWeek {
   SATURDAY = 'saturday',
   SUNDAY = 'sunday'
 }
+
+// moongose schemas 
+
+const MuscleGroupSchema = new Schema<IMuscleGroup>({
+  name: { type: String, required: true },
+  primary: { type: Boolean, default: false },
+  color: { type: String }
+});
+const PlannedSetSchema = new Schema<IPlannedSet>({
+  type: { type: String, enum: ['normal', 'warmup', 'dropset', 'failure', 'amrap'], required: true },
+  targetReps: { type: Number },
+  repRange: {
+    min: { type: Number },
+    max: { type: Number }
+  },
+  targetWeight: { type: Number },
+  targetRPE: { type: Number },
+  notes: { type: String }
+});
+
+const PlannedExerciseSchema = new Schema<IPlannedExercise>({
+  exerciseId: { type: String, required: true },
+  exerciseName: { type: String, required: true },
+  muscleGroup: { type: String, required: true },
+  sets: [PlannedSetSchema],
+  order: { type: Number, required: true },
+  restTime: { type: Number },
+  notes: { type: String },
+  isSuperset: { type: Boolean, default: false },
+  supersetGroup: { type: Number }
+});
+const DayPlanSchema = new Schema<IDayPlan>({
+  name: { type: String, required: true },
+  muscleGroups: [MuscleGroupSchema],
+  exercises: [PlannedExerciseSchema],
+  estimatedDuration: { type: Number, required: true },
+  notes: { type: String },
+  isRestDay: { type: Boolean, default: false }
+});
+const WeeklyScheduleSchema = new Schema<IWeeklySchedule>({
+  monday: DayPlanSchema,
+  tuesday: DayPlanSchema,
+  wednesday: DayPlanSchema,
+  thursday: DayPlanSchema,
+  friday: DayPlanSchema,
+  saturday: DayPlanSchema,
+  sunday: DayPlanSchema
+});
+const WorkoutPlanSchema = new Schema<IWorkoutPlan>({
+  userId: { type: String, required: true },
+  name: { type: String, required: true },
+  description: { type: String },
+  weeklySchedule: { type: WeeklyScheduleSchema, required: true },
+  isActive: { type: Boolean, default: true },
+  isTemplate: { type: Boolean, default: false },
+  difficulty: { type: String, enum: ['beginner', 'intermediate', 'advanced'], required: true },
+  estimatedDuration: { type: Number, required: true },
+  stats: {
+    totalSessions: { type: Number, default: 0 },
+    completedSessions: { type: Number, default: 0 },
+    lastUsed: { type: Date },
+    createdFrom: { type: String }
+  }
+}, {
+  timestamps: true
+});
+const WorkoutPlanModel = mongoose.model<IWorkoutPlan>('WorkoutPlan', WorkoutPlanSchema);
+export default WorkoutPlanModel;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Popular workout split templates
 export const WORKOUT_SPLIT_TEMPLATES = {

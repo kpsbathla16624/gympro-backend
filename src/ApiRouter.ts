@@ -1,5 +1,6 @@
 import { Router } from "express";
 import userRouter from "./routers/UserRouter";
+import WorkOutRouter from "./routers/WorkOutPlannerRouter";
 
 const apirouter = Router();
 
@@ -8,6 +9,7 @@ apirouter.get('/', (_req, res) => {
 });
 
 apirouter.use("/user", userRouter);
+apirouter.use("/workout", WorkOutRouter);
 
 export default apirouter;
 

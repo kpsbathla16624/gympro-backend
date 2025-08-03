@@ -15,7 +15,7 @@ app.get('/', (_req, res) => {
 app.use('/api', apirouter);
 
 // connect to MongoDB
-mongoose.connect(process.env.MONGOURL ?? 'mongodb://localhost:27017/', {
+mongoose.connect('mongodb://localhost:27017/gymapp', {
 
 }).then(() => {
   console.log('Connected to MongoDB');
